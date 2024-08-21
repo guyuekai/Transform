@@ -1,4 +1,7 @@
 import os
+import re
+import sys
+
 import requests
 import math
 import tiktoken
@@ -7,8 +10,8 @@ import torch.nn as nn
 from torch.nn import functional as F
 
 # 超参数
-batch_size = 6
-context_length = 16  # 一个句子的单词数量
+batch_size = 64
+context_length = 128  # 一个句子的单词数量
 d_model = 512  # 每个词扩充的维度
 num_blocks = 6  # Transform块的个数
 num_heads = 4  # 多头注意力的参数
@@ -22,13 +25,24 @@ TORCH_SEED = 1337
 torch.manual_seed(TORCH_SEED)
 
 # Load training data
-if not os.path.exists('sales_textbook.txt'):
-    url = 'https://huggingface.co/datasets/goendalf666/sales-textbook_for_convincing_and_selling/raw/main/sales_textbook.txt'
-    with open('sales_textbook.txt', 'w') as f:
-        f.write(requests.get(url).text)
 
-with open('sales_textbook.txt', 'r', encoding='utf-8') as f:
-    text = f.read()
+if not os.path.exists('A_Game_Of_Thrones.txt'):
+    print("Error: 'A_Game_Of_Thrones.txt' does not exist.")
+    sys.exit(1)
+
+
+try:
+    with open('A_Game_Of_Thrones.txt', 'r', encoding='utf-8') as f:
+        text = f.read()
+        text = re.sub(r'[^a-zA-Z\s]', '', text)
+        text = re.sub(r'\n+', ' ', text)
+        text = re.sub(r'\s+', ' ', text)
+except UnicodeDecodeError:
+    with open('A_Game_Of_Thrones.txt', 'r', encoding='ISO-8859-1') as f:
+        text = f.read()
+        text = re.sub(r'[^a-zA-Z\s]', '', text)
+        text = re.sub(r'\n+', ' ', text)
+        text = re.sub(r'\s+', ' ', text)
 
 # Using TikToken (Same as GPT3) to tokenize the source text
 encoding = tiktoken.get_encoding("cl100k_base")
